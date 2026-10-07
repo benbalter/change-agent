@@ -1,0 +1,13 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "change-agent-example",
+  "main": "./worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": { "crons": ["0 * * * *"] },
+  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "default" }],
+  "durable_objects": {
+    "bindings": [{ "name": "CHANGE_AGENT", "class_name": "ChangeAgentDO" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChangeAgentDO"] }],
+}
