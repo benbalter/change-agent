@@ -12,10 +12,10 @@ But wait. What if you just committed each press release to Git, and let Git do t
 
 ## Okay, I'm sold. How do I use it?
 
-Change Agent runs inside a Cloudflare Worker. Install it:
+Change Agent runs inside a Cloudflare Worker. It isn't on npm, so install it from GitHub (the `prepare` script builds it on install):
 
 ```sh
-npm install change-agent
+npm install github:benbalter/change-agent
 ```
 
 Add an Artifacts binding and the Change Agent Durable Object to your `wrangler.jsonc`:
@@ -125,6 +125,10 @@ The [Artifacts Workers binding](https://developers.cloudflare.com/artifacts/api/
 | `push` / `pull` / `sync` / `add_remote`   | Not needed: the Artifacts repo _is_ the remote. Use `remote()` to clone it. |
 | `GITHUB_TOKEN` credentials                | Short-lived Artifacts tokens, minted for you                                |
 
+## Project status
+
+Early. Artifacts itself is in open beta. The write path is tested against a local Git server and the Workers runtime, but hasn't yet been run against live Artifacts.
+
 ## Development
 
 ```sh
@@ -132,10 +136,10 @@ npm install
 npm test            # Node tests against a real Git server, plus a workerd smoke test
 npm run lint
 npm run typecheck
-npm run test:integration   # against real Artifacts; needs `wrangler login --scopes artifacts:write …`
+npm run test:integration   # against real Artifacts; needs a Workers Paid account with Artifacts access
 ```
 
-Miniflare can't emulate Artifacts locally (it only proxies to the real service), so the behavior tests in [`test/node`](test/node) run `GitStore` against a local [smart-HTTP Git server](https://github.com/gabrielcsapo/node-git-server) and check the results with the `git` CLI.
+Miniflare can't emulate Artifacts locally (its Artifacts binding only proxies to the real service), so the behavior tests in [`test/node`](test/node) run `GitStore` against a local [smart-HTTP Git server](https://github.com/gabrielcsapo/node-git-server) and check the results with the `git` CLI.
 
 ## License
 

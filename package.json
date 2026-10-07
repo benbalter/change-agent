@@ -40,7 +40,7 @@
     "fix": "eslint --fix . && prettier --write .",
     "test": "vitest run --config vitest.node.config.ts && vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "prepublishOnly": "npm run build"
+    "prepare": "npm run build"
   },
   "dependencies": {
     "isomorphic-git": "1.43.1",
@@ -65,5 +65,6 @@
     "esbuild": true,
     "node-git-server": false,
     "fsevents": false
-  }
+  },
+  "private": true
 }
