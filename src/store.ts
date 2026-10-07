@@ -174,7 +174,8 @@ export class GitStore {
       });
     }
     this.#fs = fs;
-    this.#head = head;
+    // Record what we actually cloned, not the hint, which may lag behind.
+    this.#head = head === null ? null : await git.resolveRef({ fs, dir: DIR, ref: "HEAD" });
     return fs;
   }
 

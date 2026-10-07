@@ -11,7 +11,7 @@ class FakeArtifactsError extends Error {
 }
 
 /** An in-memory stand-in for the Artifacts binding: one branch, files by path. */
-function fakeArtifacts(options: { exists?: boolean; notReadyFor?: number } = {}) {
+function fakeArtifacts(options: { exists?: boolean; notReadyFor?: number; defaultBranch?: string } = {}) {
   const files = new Map<string, string>();
   const calls: string[] = [];
   let exists = options.exists ?? true;
@@ -26,7 +26,10 @@ function fakeArtifacts(options: { exists?: boolean; notReadyFor?: number } = {})
       calls.push(`log ${opts.ref} ${opts.limit}`);
       return [];
     },
-    info: async () => ({ remote: "https://example.artifacts.cloudflare.net/git/ns/repo.git" }),
+    info: async () => ({
+      remote: "https://example.artifacts.cloudflare.net/git/ns/repo.git",
+      defaultBranch: options.defaultBranch ?? "main",
+    }),
     createToken: async (scope: string, ttl: number) => {
       calls.push(`createToken ${scope} ${ttl}`);
       return { plaintext: "art_v1_secret?expires=123", expiresAt: "2026-10-07T00:00:00Z", scope, id: "t" };
@@ -132,11 +135,20 @@ describe("ChangeAgent", () => {
     }
   });
 
-  it("imports an existing repo", async () => {
-    const { artifacts, calls } = fakeArtifacts({ exists: false });
+  it("uses an existing repo's default branch", async () => {
+    const { artifacts } = fakeArtifacts({ defaultBranch: "trunk" });
+    const agent = await ChangeAgent.init(artifacts, fakeWriters(new Map()).writers, "repo");
+    expect(agent.branch).toBe("trunk");
+    const pinned = await ChangeAgent.init(artifacts, fakeWriters(new Map()).writers, "repo", {
+      branch: "dev",
+    });
+    expect(pinned.branch).toBe("dev");
+  });
+
+  it("imports an existing repo onto its own default branch", async () => {
+    const { artifacts, calls } = fakeArtifacts({ exists: false, defaultBranch: "master" });
     const agent = await ChangeAgent.import(artifacts, fakeWriters(new Map()).writers, "demo", {
       url: "https://github.com/benbalter/change_agent_demo",
-      branch: "master",
     });
     expect(agent.branch).toBe("master");
     expect(calls.some((c) => c.startsWith("import ") && c.includes("change_agent_demo"))).toBe(true);

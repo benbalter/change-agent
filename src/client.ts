@@ -6,7 +6,7 @@ import { assertValidKey } from "./keys.js";
 import { DEFAULT_AUTHOR, type Author, type Value } from "./store.js";
 
 export interface ChangeAgentOptions {
-  /** Branch to read from and commit to. Defaults to "main". */
+  /** Branch to read from and commit to. Defaults to the repo's default branch. */
   branch?: string;
   /** Commit author. Defaults to "Change Agent <change-agent@users.noreply.github.com>". */
   author?: Author;
@@ -62,18 +62,20 @@ export class ChangeAgent {
     this.author = options.author ?? DEFAULT_AUTHOR;
   }
 
-  /** Open the repo called `name`, creating it if it doesn't exist. */
+  /** Open the repo called `name`, creating it (with a `main` branch) if it doesn't exist. */
   static async init(
     artifacts: Artifacts,
     writers: WriterNamespace,
     name: string,
     options: ChangeAgentOptions = {},
   ): Promise<ChangeAgent> {
-    const branch = options.branch ?? "main";
-    await waitForRepo(artifacts, name, async () => {
-      await artifacts.create(name, { setDefaultBranch: branch });
+    const info = await waitForRepo(artifacts, name, async () => {
+      await artifacts.create(name, { setDefaultBranch: options.branch ?? "main" });
     });
-    return new ChangeAgent(artifacts, writers, name, options);
+    return new ChangeAgent(artifacts, writers, name, {
+      ...options,
+      branch: options.branch ?? info.defaultBranch,
+    });
   }
 
   /** Create the repo `name` as a copy of an existing Git repo, then open it. */
@@ -84,10 +86,11 @@ export class ChangeAgent {
     source: ImportSource,
     options: ChangeAgentOptions = {},
   ): Promise<ChangeAgent> {
-    await waitForRepo(artifacts, name, async () => {
+    const info = await waitForRepo(artifacts, name, async () => {
       await artifacts.import({ source, target: { name } });
     });
-    return new ChangeAgent(artifacts, writers, name, { branch: source.branch, ...options });
+    const branch = options.branch ?? source.branch ?? info.defaultBranch;
+    return new ChangeAgent(artifacts, writers, name, { ...options, branch });
   }
 
   /** The value at `key` as text, or null if there isn't one. */
@@ -154,13 +157,19 @@ export class ChangeAgent {
 /**
  * Wait until the repo exists and is ready, calling `create` once if it's missing.
  * Creation, import, and fork finish asynchronously, so back off while they run.
+ * Returns the repo's metadata, so callers can default to its real default branch
+ * (an imported repo may use `master`, and committing to `main` would start a second,
+ * unrelated history).
  */
-async function waitForRepo(artifacts: Artifacts, name: string, create: () => Promise<void>): Promise<void> {
+async function waitForRepo(
+  artifacts: Artifacts,
+  name: string,
+  create: () => Promise<void>,
+): Promise<ArtifactsRepoInfo> {
   let created = false;
   for (let attempt = 0; attempt < READY_ATTEMPTS; attempt++) {
     try {
-      await withRepo(artifacts, name, async () => undefined);
-      return;
+      return await withRepo(artifacts, name, (repo) => repo.info());
     } catch (error) {
       if (artifactsErrorCode(error) === "NOT_FOUND" && !created) {
         created = true;

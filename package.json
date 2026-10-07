@@ -61,9 +61,8 @@
     "wrangler": "4.148.0"
   },
   "allowScripts": {
-    "workerd@1.20260815.1": true,
-    "workerd@1.20261006.1": true,
-    "esbuild@0.28.1": true,
+    "workerd": true,
+    "esbuild": true,
     "node-git-server": false,
     "fsevents": false
   }

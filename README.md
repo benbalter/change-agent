@@ -111,7 +111,7 @@ The [Artifacts Workers binding](https://developers.cloudflare.com/artifacts/api/
 
 ## Limits and costs
 
-- The Durable Object holds the tip of the branch in memory, and Artifacts doesn't support partial clones. So one repo's current files need to fit comfortably in a Durable Object's 128 MB memory. If you're tracking more than that, split into more repos.
+- The Durable Object holds the tip of the branch in memory, and Artifacts doesn't support partial clones. So one repo's current files need to fit comfortably within the [128 MB memory limit](https://developers.cloudflare.com/workers/platform/limits/) of the isolate it runs in. If you're tracking more than that, split into more repos.
 - Artifacts caps repos at 1 GB and files at 32 MB ([limits](https://developers.cloudflare.com/artifacts/platform/limits/)).
 - Artifacts requires the Workers Paid plan and is billed per operation and per GB-month of storage ([pricing](https://developers.cloudflare.com/artifacts/platform/pricing/)). A write uses several operations: a head check, a token when the cached one expires, a clone when the cache is cold, and the push. A read uses one.
 
