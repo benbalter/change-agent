@@ -39,8 +39,8 @@
     "lint": "eslint . && prettier --check .",
     "fix": "eslint --fix . && prettier --write .",
     "test": "vitest run --config vitest.node.config.ts && vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test:live": "CHANGE_AGENT_LIVE=1 vitest run"
   },
   "dependencies": {
     "isomorphic-git": "1.43.1",

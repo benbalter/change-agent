@@ -1,42 +1,28 @@
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { AddressInfo } from "node:net";
 import http from "isomorphic-git/http/node";
 import type { HttpClient } from "isomorphic-git";
-import { Git } from "node-git-server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ConflictError, InvalidKeyError } from "../../src/errors.js";
 import { GitStore, httpRemote, type Remote } from "../../src/store.js";
+import { startGitServer, type GitServer } from "../support/git-server.js";
 
 // A real smart-HTTP Git server (git-upload-pack / git-receive-pack) over temp bare repos.
-let root: string;
-let server: Git;
-let baseUrl: string;
+let server: GitServer;
 let url: string;
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), "change-agent-"));
-  server = new Git(root, { autoCreate: true });
-  await new Promise<void>((resolve) => server.listen(0, { type: "http" }, resolve));
-  baseUrl = `http://127.0.0.1:${(server.server!.address() as AddressInfo).port}`;
+  server = await startGitServer();
 });
 
-afterAll(async () => {
-  await server.close();
-  rmSync(root, { recursive: true, force: true });
-});
+afterAll(() => server.close());
 
-beforeEach(() => {
-  const name = `${randomUUID()}.git`;
-  // Create the bare repo ourselves so HEAD points at main whatever the machine's
-  // init.defaultBranch is. A HEAD naming a missing branch breaks isomorphic-git
-  // fetches (https://github.com/isomorphic-git/isomorphic-git/issues/1654).
-  execFileSync("git", ["init", "--bare", "-q", "-b", "main", join(root, name)]);
-  url = `${baseUrl}/${name}`;
+beforeEach(async () => {
+  url = await server.createRepo(randomUUID());
 });
 
 const remote = () => httpRemote(url);

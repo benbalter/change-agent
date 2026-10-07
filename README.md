@@ -134,13 +134,16 @@ Early. Artifacts itself is in open beta. The write path is tested against a loca
 
 ```sh
 npm install
-npm test            # Node tests against a real Git server, plus a workerd smoke test
+npm test           # everything below, with a local stand-in for Artifacts
 npm run lint
 npm run typecheck
-npm run test:integration   # against real Artifacts; needs a Workers Paid account with Artifacts access
+npm run test:live  # the end-to-end suite against real Artifacts (needs Workers Paid with Artifacts access)
 ```
 
-Miniflare can't emulate Artifacts locally (its Artifacts binding only proxies to the real service), so the behavior tests in [`test/node`](test/node) run `GitStore` against a local [smart-HTTP Git server](https://github.com/gabrielcsapo/node-git-server) and check the results with the `git` CLI.
+Miniflare can't emulate Artifacts locally (its Artifacts binding only proxies to the real service), so the tests bring their own stand-in. [`test/support/git-server.ts`](test/support/git-server.ts) is a real smart-HTTP Git server that also answers the binding's calls (read a file, log, issue a token) using the `git` CLI, and checks tokens the way Artifacts does. [`test/workers/fake-artifacts.ts`](test/workers/fake-artifacts.ts) is the binding side of it.
+
+- [`test/node`](test/node): `GitStore` against that server, checked with the `git` CLI.
+- [`test/workers`](test/workers): runs in workerd, end to end, from the client through the Durable Object and a push, then reads back through the binding. `npm run test:live` runs the same suite against real Artifacts, which also checks that the stand-in behaves like the real thing.
 
 ## License
 

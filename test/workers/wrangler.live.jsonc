@@ -1,9 +1,11 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "change-agent-test",
+  "name": "change-agent-test-live",
   "main": "./worker.ts",
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
+  // Live mode: the real Artifacts service instead of the local stand-in.
+  "artifacts": [{ "binding": "ARTIFACTS", "namespace": "change-agent-test", "remote": true }],
   "durable_objects": {
     "bindings": [
       { "name": "CHANGE_AGENT", "class_name": "TestChangeAgentDO" },
