@@ -31,7 +31,12 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
-  url = `${baseUrl}/${randomUUID()}.git`;
+  const name = `${randomUUID()}.git`;
+  // Create the bare repo ourselves so HEAD points at main whatever the machine's
+  // init.defaultBranch is. A HEAD naming a missing branch breaks isomorphic-git
+  // fetches (https://github.com/isomorphic-git/isomorphic-git/issues/1654).
+  execFileSync("git", ["init", "--bare", "-q", "-b", "main", join(root, name)]);
+  url = `${baseUrl}/${name}`;
 });
 
 const remote = () => httpRemote(url);

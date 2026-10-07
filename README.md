@@ -112,6 +112,7 @@ The [Artifacts Workers binding](https://developers.cloudflare.com/artifacts/api/
 ## Limits and costs
 
 - The Durable Object holds the tip of the branch in memory, and Artifacts doesn't support partial clones. So one repo's current files need to fit comfortably within the [128 MB memory limit](https://developers.cloudflare.com/workers/platform/limits/) of the isolate it runs in. If you're tracking more than that, split into more repos.
+- Write to the repo's default branch (the default when you don't pass `branch`). If you pick another branch while the default one is still empty, the repo's `HEAD` points at a branch that doesn't exist, and isomorphic-git can't fetch from it ([isomorphic-git#1654](https://github.com/isomorphic-git/isomorphic-git/issues/1654)).
 - Artifacts caps repos at 1 GB and files at 32 MB ([limits](https://developers.cloudflare.com/artifacts/platform/limits/)).
 - Artifacts requires the Workers Paid plan and is billed per operation and per GB-month of storage ([pricing](https://developers.cloudflare.com/artifacts/platform/pricing/)). A write uses several operations: a head check, a token when the cached one expires, a clone when the cache is cold, and the push. A read uses one.
 
