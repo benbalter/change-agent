@@ -43,7 +43,7 @@
     "test:live": "CHANGE_AGENT_LIVE=1 vitest run"
   },
   "dependencies": {
-    "isomorphic-git": "1.43.3",
+    "isomorphic-git": "1.44.2",
     "memfs": "4.80.0"
   },
   "devDependencies": {
